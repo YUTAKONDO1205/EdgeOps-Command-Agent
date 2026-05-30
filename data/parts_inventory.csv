@@ -1,0 +1,14 @@
+part_id,name,category,stock,reorder_point,lead_time_days,unit_price_jpy
+BRG-P03-6205ZZ,軸受ユニット Pump-03用,bearing,2,1,3,12800
+BRG-P01-6205ZZ,軸受ユニット Pump-01用,bearing,1,1,3,12800
+BRG-M02-6206ZZ,軸受ユニット Motor-02用,bearing,0,1,5,15600
+BRG-C05-6308ZZ,軸受ユニット Compressor-05用,bearing,1,1,7,28400
+BOLT-P03-M12,固定ボルト M12 Pump-03用,bolt,20,5,1,180
+SEAL-P03-OR-A,オーリング Pump-03用,seal,8,4,2,520
+SEAL-P01-OR-A,オーリング Pump-01用,seal,6,3,2,520
+LUB-HD-500,高温対応グリス 500g,lubricant,4,2,1,2400
+BELT-F04-A52,Vベルト Fan-04用,belt,3,2,2,3200
+BELT-C05-B65,Vベルト Compressor-05用,belt,2,1,2,4100
+FILT-AIR-A10,エアフィルタ A10,filter,12,4,1,890
+FILT-C05-OIL,圧縮機オイルフィルタ Compressor-05,filter,3,2,3,2800
+VLV-C05-IN-A,吸気バルブ Compressor-05,valve,1,1,10,38500

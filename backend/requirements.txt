@@ -1,0 +1,6 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+# Inherits the parent project's requirements via PYTHONPATH; this file
+# only adds the FastAPI-specific extras so the backend can be deployed
+# independently if you slice the repo apart.

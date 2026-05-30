@@ -1,0 +1,51 @@
+version: "3.9"
+
+# One-command stack: Streamlit + FastAPI + Next.js, all sharing the .env at repo root.
+# Use:    docker-compose up --build
+# Stop:   docker-compose down
+#
+# All Azure services are optional. With an empty .env the stack runs in
+# mock + local-fallback mode (Cosmos, Blob, AI Search, Event Hubs).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: edgeops-backend:latest
+    env_file: .env
+    environment:
+      EDGEOPS_CORS_ORIGINS: "http://localhost:3000,http://localhost:8501"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./_state:/app/_state          # persists local-fallback JSONLs across restarts
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: edgeops-streamlit:latest
+    env_file: .env
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: edgeops-frontend:latest
+    environment:
+      # Browser-side env var — must point at the URL the browser uses, not the docker network name.
+      NEXT_PUBLIC_API_BASE: "http://localhost:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
