@@ -1,0 +1,29 @@
+{
+  "name": "edgeops-command-agent",
+  "version": "1.0.0",
+  "description": "開発者: 近藤悠太 (Kondo Yuta)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "preview": "zenn preview",
+    "new:article": "zenn new:article"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues"
+  },
+  "homepage": "https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent#readme",
+  "dependencies": {
+    "zenn-cli": "^0.4.8"
+  }
+}

@@ -151,3 +151,15 @@ SUBMISSION.md
 # Demo materials — keep local only (台本・字幕・YouTube用メモ)
 # demo_script.md / demo_script.txt / demo_youtube.md / demo_captions.srt
 docs/demo_*
+docs/セリフ.txt
+docs/セリフ_機能紹介.txt
+
+# ──────────────────────────────────────────────────────────────────────
+# Media / large binaries — 動画はYouTubeで公開。GitHub(100MB)に載せない。
+# ──────────────────────────────────────────────────────────────────────
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+デモ動画.mp4

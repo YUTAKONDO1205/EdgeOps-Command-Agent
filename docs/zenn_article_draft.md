@@ -10,7 +10,7 @@
 
 そこで本プロジェクトでは、**点検データを異常判断・原因推定・作業指示・報告書に変換する** EdgeOps Command Agent を開発しました。
 
-🎥 デモ動画（3分）: [YouTube 限定公開 URL]
+🎥 デモ動画（約5分）: https://youtu.be/N-M7Sm0fNi8
 
 🌐 触れる成果物: https://edgeops-command-agent.victoriousriver-84ba0565.eastus2.azurecontainerapps.io/
 
