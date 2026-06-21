@@ -1,5 +1,7 @@
 # EdgeOps Command Agent
 
+> 🏆 **Microsoft Agent Hackathon powered by Tokyo Electron Device 特別賞受賞**
+
 開発者: 近藤悠太 (Kondo Yuta)
 
 EdgeOps Command Agent is an Azure-powered maintenance AI agent that converts inspection data into risk assessment, root cause hypotheses, work orders, and management reports.
@@ -280,7 +282,7 @@ Agent Reasoning タブに **対話パネル**を追加。生成済みの解析�
 python scripts/run_eval.py   # マトリクスを表示し docs/eval_results.md を生成
 ```
 
-結果は **20/20 プリセット・108/108 チェック合格**（[docs/eval_results.md](docs/eval_results.md)）。`tests/test_agent_eval.py` で CI にも組み込み済み。
+結果は **20/20 プリセット・109/109 チェック合格**（[docs/eval_results.md](docs/eval_results.md)）。GitHub Actions の `test` ジョブ（`run_eval.py` ＋ pytest）としてデプロイ前に常時実行されます。
 
 ## ディレクトリ構成
 

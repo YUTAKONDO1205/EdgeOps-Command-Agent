@@ -8,12 +8,14 @@ published: true
 
 ![EdgeOps Command Agent ― 点検データを8つのAIエージェントが判断・原因・初動・報告へ変換する](/images/edgeops/eyecatch.png)
 
+> 🏆 **Microsoft Agent Hackathon powered by Tokyo Electron Device 特別賞受賞**
+
 ## TL;DR
 
 - **課題**: 設備保全は「異常検知」で止まりがち。**危険判断・原因推定・初動・報告が属人化**し、若手は次に何をすべきか分からない。
 - **解決**: 点検データを **異常判断 → 原因推定 → 作業指示 → 管理者報告書** に変換する **8 Agent** のマルチエージェント。
 - **価値（円で算出）**: Motor-02 が Critical のとき、早期介入で **約 ¥2,107,800 を回避**（LLM に計算させず、実績CSVから決定論で導出・監査可能）。
-- **動く証拠**: 5設備×4強度=20プリセットで **20/20・ポリシーチェック 108/108 合格**。全提案に **人間承認ゲート＋監査ログ**。
+- **動く証拠**: 5設備×4強度=20プリセットで **20/20・ポリシーチェック 109/109 合格**。全提案に **人間承認ゲート＋監査ログ**。
 
 🎥 約5分デモ → https://youtu.be/N-M7Sm0fNi8　🌐 今すぐ触る → https://edgeops-command-agent.victoriousriver-84ba0565.eastus2.azurecontainerapps.io/　📦 コード → https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
 
@@ -279,7 +281,7 @@ az containerapp up \
 - ambiguity 検出時は `human_confirmation_required=true`
 - What-if は常に「今 / 3日後 / 1週間放置」の 3 シナリオを返し、「放置」は `recommended=false`
 
-結果は **20/20 プリセットが全ポリシー合格（総チェック 108/108 件合格）**。詳細マトリクスは `docs/eval_results.md`。「動きました」を主観で言い切らず、満たすべき不変条件として機械検証できる形にしてあります。
+結果は **20/20 プリセットが全ポリシー合格（総チェック 109/109 件合格）**。詳細マトリクスは `docs/eval_results.md`。「動きました」を主観で言い切らず、満たすべき不変条件として機械検証できる形にしてあります。
 
 ## 13. 今後の展望
 
@@ -295,3 +297,7 @@ az containerapp up \
 研究では「異常を見つける」ところまで何度も作ってきましたが、その先の判断を現場が動く形にするのは、検知とはまったく別の難しさでした。EdgeOps Command Agent は、その先を 8 つの Agent と人間承認で埋めようとした試みです。
 
 同じように「検知のその先」で詰まっている方の手がかりになれば嬉しいです。実際に触れる URL とソースコードは冒頭に置いてあります。
+
+---
+
+最後に、**Microsoft Agent Hackathon powered by Tokyo Electron Device** にて本プロジェクトを **特別賞** に選んでいただきました。運営の皆様、審査員の皆様、開発を支えてくださったすべての方に心より御礼申し上げます。ありがとうございました。

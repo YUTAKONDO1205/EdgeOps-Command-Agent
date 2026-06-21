@@ -70,7 +70,8 @@ def _resize_to_max_side(img: Image.Image, max_side: int) -> Image.Image:
 
 
 def _draw_label(draw: ImageDraw.ImageDraw, anchor: tuple[int, int],
-                text: str, fill: tuple[int, int, int], font) -> None:
+                text: str, fill: tuple[int, int, int], font,
+                img_w: int | None = None) -> None:
     """Draw a pill-style label above the bbox top-left corner."""
     pad_x, pad_y = 4, 2
     try:
@@ -80,6 +81,10 @@ def _draw_label(draw: ImageDraw.ImageDraw, anchor: tuple[int, int],
         # Pillow < 10 / ImageFont.load_default
         tw, th = draw.textsize(text, font=font)
     x, y = anchor
+    # Keep the pill inside the image horizontally (boxes near the right
+    # edge would otherwise push the label out of frame).
+    if img_w is not None:
+        x = max(0, min(x, img_w - tw - 2 * pad_x - 2))
     # Pull label above the box; if it would clip the top, place inside the box.
     y_label = y - th - 2 * pad_y - 2
     inside = y_label < 0
@@ -97,6 +102,7 @@ def annotate(
     max_side: int = 1280,
     crop_thumb_side: int = 256,
     enhance: bool = True,
+    label_scale: float = 1.0,
 ) -> dict[str, Any]:
     """Render the evidence images for the Vision Agent output.
 
@@ -109,6 +115,8 @@ def annotate(
     max_side    : longest edge for the overlay / enhanced outputs (keeps
                   data URLs reasonable in size for the frontend)
     crop_thumb_side : longest edge for per-region crops
+    label_scale : multiplier for label font size and outline width — use
+                  >1 when the overlay will be shown small (print / slides)
 
     Returns
     -------
@@ -128,7 +136,8 @@ def annotate(
     overlay_rgba = base.convert("RGBA")
     boxes_rgba = Image.new("RGBA", base.size, (0, 0, 0, 0))
     boxes_draw = ImageDraw.Draw(boxes_rgba)
-    font = _load_font(max(12, int(min(w, h) * 0.018)))
+    font = _load_font(max(12, int(min(w, h) * 0.018 * label_scale)))
+    outline_w = max(3, int(round(3 * label_scale)))
 
     crops: dict[str, str] = {}
     drawn_regions = 0
@@ -151,7 +160,7 @@ def annotate(
 
         # Soft fill + sharp outline.
         boxes_draw.rectangle([x0, y0, x1, y1], fill=rgb + (52,))
-        boxes_draw.rectangle([x0, y0, x1, y1], outline=rgb + (255,), width=3)
+        boxes_draw.rectangle([x0, y0, x1, y1], outline=rgb + (255,), width=outline_w)
 
         # Label
         try:
@@ -159,7 +168,7 @@ def annotate(
         except (TypeError, ValueError):
             conf = 0
         label = f"{region.get('region_id', '?')} · {severity} · {conf}%"
-        _draw_label(boxes_draw, (x0, y0), label, rgb, font)
+        _draw_label(boxes_draw, (x0, y0), label, rgb, font, img_w=w)
 
         # Per-region crop thumbnail
         pad = int(min(w, h) * 0.015)

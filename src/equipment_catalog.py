@@ -22,6 +22,7 @@ equipment threshold overrides live in ``risk_engine.EQUIPMENT_THRESHOLDS``.
 """
 from __future__ import annotations
 
+import zlib
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -233,16 +234,17 @@ BBOX_LAYOUTS: dict[str, dict[str, dict[str, tuple[float, float, float, float]]]]
             "shaft-end":         (0.00, 0.32, 0.18, 0.58),
             "name-plate":        (0.30, 0.40, 0.40, 0.55),
         },
-        # critical: motor with terminal box on top (small box with eye-bolt),
-        # right-side fan-cover grill, cable exiting at the bottom.
+        # critical: heavily corroded motor; terminal box lower-LEFT with the
+        # cable gland exiting to its right, round fan-cover grill on the
+        # RIGHT, shaft coupling at the far left edge, eye-bolt on top.
         "critical": {
-            "terminal-box":      (0.30, 0.00, 0.55, 0.18),
-            "cable-gland":       (0.30, 0.65, 0.46, 0.85),
-            "cooling-fins":      (0.15, 0.13, 0.65, 0.78),
-            "fan-cover":         (0.02, 0.20, 0.16, 0.65),
-            "ventilation-slots": (0.04, 0.25, 0.18, 0.78),
-            "frame-surface":     (0.15, 0.10, 0.85, 0.85),
-            "shaft-end":         (0.70, 0.20, 0.93, 0.85),
+            "terminal-box":      (0.10, 0.33, 0.34, 0.78),
+            "cable-gland":       (0.29, 0.55, 0.45, 0.88),
+            "cooling-fins":      (0.17, 0.12, 0.72, 0.72),
+            "fan-cover":         (0.74, 0.13, 1.00, 0.82),
+            "ventilation-slots": (0.75, 0.17, 0.99, 0.81),
+            "frame-surface":     (0.12, 0.08, 0.78, 0.86),
+            "shaft-end":         (0.00, 0.25, 0.10, 0.62),
             "name-plate":        (0.43, 0.43, 0.58, 0.62),
         },
     },
@@ -497,8 +499,10 @@ def _bearing_fault(t: np.ndarray, center_hz: float, severity_amp: float, rng: np
 
 def _seed_from(equipment_id: str, intensity: str) -> int:
     # Deterministic per (equipment, intensity) so the UI stays reproducible
-    # across page reloads but each asset still looks different.
-    return (hash((equipment_id, intensity)) & 0x7FFFFFFF) or 1
+    # across page reloads but each asset still looks different. crc32 instead
+    # of built-in hash(): PYTHONHASHSEED randomises hash() per process, which
+    # made eval check counts drift between runs.
+    return (zlib.crc32(f"{equipment_id}:{intensity}".encode("utf-8")) & 0x7FFFFFFF) or 1
 
 
 def generate_sensor_df(

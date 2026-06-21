@@ -2,7 +2,7 @@
 
 `python scripts/run_eval.py` で自動生成。全 20 プリセット（5設備 × 4強度）を mock モードで決定論的に実行し、出力がスキーマ妥当かつ**ポリシー準拠**かを検証した結果です。
 
-**結果: 20/20 プリセットが全ポリシー合格 ／ 総チェック 108/108 件合格**
+**結果: 20/20 プリセットが全ポリシー合格 ／ 総チェック 109/109 件合格**
 
 | 設備 | 強度 | リスク判定 | あいまい | 適用チェック | 結果 |
 |---|---|---|---|---|---|
@@ -21,7 +21,7 @@
 | Fan-04 | normal | Normal | — | 5/5 | ✅ |
 | Fan-04 | warning | Warning | あり | 6/6 | ✅ |
 | Fan-04 | critical | Critical | — | 6/6 | ✅ |
-| Fan-04 | ambiguous | Normal | — | 4/4 | ✅ |
+| Fan-04 | ambiguous | Normal | あり | 5/5 | ✅ |
 | Compressor-05 | normal | Normal | — | 5/5 | ✅ |
 | Compressor-05 | warning | Warning | あり | 6/6 | ✅ |
 | Compressor-05 | critical | Critical | — | 6/6 | ✅ |
