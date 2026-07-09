@@ -1,5 +1,8 @@
-name: Deploy to Azure Container Apps
+name: CI (+ manual deploy to Azure Container Apps)
 
+# The Azure resources this deploys to were torn down after the hackathon
+# (2026-07-09). Tests still run on every push; the deploy job only runs on a
+# manual dispatch, and expects the resource group / ACR to be recreated first.
 on:
   push:
     branches: [main]
@@ -40,6 +43,7 @@ jobs:
 
   build-and-deploy:
     needs: test
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

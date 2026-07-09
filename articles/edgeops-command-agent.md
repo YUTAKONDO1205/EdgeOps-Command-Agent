@@ -17,7 +17,15 @@ published: true
 - **価値（円で算出）**: Motor-02 が Critical のとき、早期介入で **約 ¥2,107,800 を回避**（LLM に計算させず、実績CSVから決定論で導出・監査可能）。
 - **動く証拠**: 5設備×4強度=20プリセットで **20/20・ポリシーチェック 109/109 合格**。全提案に **人間承認ゲート＋監査ログ**。
 
-🎥 約5分デモ → https://youtu.be/N-M7Sm0fNi8　🌐 今すぐ触る → https://edgeops-command-agent.victoriousriver-84ba0565.eastus2.azurecontainerapps.io/　📦 コード → https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
+🎥 約5分デモ → https://youtu.be/N-M7Sm0fNi8　📦 コード → https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
+
+:::message
+**【追記 2026-07-09】ハッカソン終了に伴い、ライブデモ環境（Azure）は停止・削除しました。**
+
+当初この位置に掲載していた Azure Container Apps の URL は、現在アクセスできません。動作はデモ動画でご覧いただけるほか、リポジトリを clone すれば **Azure のクレデンシャルなしで**（Mock mode に自動フォールバックします）ローカルで全機能を試せます。手順は「10. Azure 構成とデプロイ」の末尾に置きました。
+
+**実際の Azure 環境で触ってみたいという方は、ご連絡ください。** この記事のコメント欄、または [GitHub Issue](https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues) からお声がけいただければ、環境を再展開してご案内します。
+:::
 
 > **異常検知で終わらせない。** ―― 本プロジェクトは、この一点に全機能を寄せて設計しました。
 
@@ -252,9 +260,28 @@ az containerapp up \
 
 > **補足**: Azure CLI 2.86.0 では `az containerapp up --source .` 内部で `OS.linux.value` を参照する箇所が None となり失敗する既知症状に当たりました。回避策として、`az acr create` → `docker build` → `docker push` → `az containerapp env create` → `az containerapp create --image ...` の 5 ステップに分解してデプロイしました（GitHub の README に再現手順を残してあります）。
 
-審査員はこの URL を開くだけで全機能を試せます。Azure OpenAI のクレデンシャルが未設定の場合は **Mock mode** に自動フォールバックする実装にしてあり、ネットワーク不調時もデモが完走します。
+審査期間中は、審査員がこの URL を開くだけで全機能を試せる状態にしていました。Azure OpenAI のクレデンシャルが未設定の場合は **Mock mode** に自動フォールバックする実装にしてあり、ネットワーク不調時もデモが完走します。
 
 > 誤解のないよう補足すると、**本番の推論経路は Azure OpenAI（Microsoft Foundry）です。** mock は鍵未設定・ネットワーク不調時にデモを完走させるための **耐障害フォールバック** であり、Azure 接続時は常に実モデルが優先されます（`EDGEOPS_USE_MOCK` または endpoint/key の有無で切替）。「動かないときに止まらない」ことを、実務運用の最低条件として実装しています。
+
+### ハッカソン終了後 ―― リソースを畳み、ローカルで再現できるようにする
+
+ハッカソン期間の終了に伴い、公開デモを支えていた Azure リソース ―― Container App 本体と Managed Environment、Container Registry、ログ用の Log Analytics ワークスペース、そして推論を担っていた Azure OpenAI（`gpt-4o` デプロイ）―― は **すべて削除しました**。個人で常時起動しておく構成ではないためです。冒頭に載せていたデモ URL も、これに伴い停止しています。
+
+ただ、**動かして確かめること自体は Azure なしでできます。** 上で触れた Mock mode の切替は `src/utils.py` の `use_mock_mode()` が担っていて、`EDGEOPS_USE_MOCK` が未指定なら `AZURE_OPENAI_ENDPOINT` と `AZURE_OPENAI_API_KEY` の有無を見て自動判定します。つまり `.env` を置かなければ、そのまま Mock mode で起動します。
+
+```powershell
+git clone https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent.git
+cd EdgeOps-Command-Agent
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+streamlit run app.py   # → http://localhost:8501
+```
+
+これで 7 タブすべて、8 Agent の思考トレース、4 種のデモデータ（normal / warning / critical / ambiguous）、人間承認フローまで一通り触れます。評価ハーネスも `python scripts/run_eval.py` が mock モードで決定論実行するので、本文の **20/20 プリセット・109/109 チェック** はそのまま手元で再現できます。
+
+**実際の Azure OpenAI に接続した状態で試してみたい**という方は、**ご連絡ください。** この記事のコメント欄、または [GitHub Issue](https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues) にお声がけいただければ、環境を再展開したうえでご案内します。
 
 ## 11. 実務導入を想定した工夫
 
@@ -296,7 +323,7 @@ az containerapp up \
 
 研究では「異常を見つける」ところまで何度も作ってきましたが、その先の判断を現場が動く形にするのは、検知とはまったく別の難しさでした。EdgeOps Command Agent は、その先を 8 つの Agent と人間承認で埋めようとした試みです。
 
-同じように「検知のその先」で詰まっている方の手がかりになれば嬉しいです。実際に触れる URL とソースコードは冒頭に置いてあります。
+同じように「検知のその先」で詰まっている方の手がかりになれば嬉しいです。デモ動画とソースコードは冒頭に置いてあります。ライブ環境はハッカソンの終了とともに畳みましたが、手元で動かす手順は 10 章の末尾に残しました。実際の Azure 環境で触ってみたい方は、コメント欄か GitHub Issue からご連絡ください。
 
 ---
 

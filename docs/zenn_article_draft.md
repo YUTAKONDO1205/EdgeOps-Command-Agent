@@ -12,9 +12,10 @@
 
 🎥 デモ動画（約5分）: https://youtu.be/N-M7Sm0fNi8
 
-🌐 触れる成果物: https://edgeops-command-agent.victoriousriver-84ba0565.eastus2.azurecontainerapps.io/
-
 📦 ソースコード: https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
+
+> **2026-07-09 追記**: ハッカソン終了に伴い、Azure 上のライブデモ環境（Container Apps）は停止・削除しました。ローカルでは `.env` を置かなければ Mock mode で全機能を試せます。実 Azure 環境で試したい方は Zenn 記事のコメント欄か GitHub Issue までご連絡ください。
+> 公開版の本文は [articles/edgeops-command-agent.md](../articles/edgeops-command-agent.md) を参照（この下書きは記録用）。
 
 ## 2. 解決したい業務課題
 
