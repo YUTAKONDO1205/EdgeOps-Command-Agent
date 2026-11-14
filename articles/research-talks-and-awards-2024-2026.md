@@ -44,6 +44,8 @@ AI 生成コードの安全確認を、コードを採用するかどうかを�
 
 2025 年 8 月に金沢工業大学で開かれた電気学会 C部門大会の、学生ポスターセッションで発表しました。加速度 3 軸と音響の 4 チャンネルを FFT で周波数の特徴量に変換し、Random Forest で判定する構成です。学習したモデルはヘッダファイルに変換し、SPRESENSE から呼び出せるようにしました。
 
+- 記事（ポスターの内容）：https://zenn.dev/kd_yuta/articles/ieej-c2025-vibration-acoustic-poster
+- 記事（学習したモデルを SPRESENSE から呼び出す実装）：https://zenn.dev/kd_yuta/articles/pdm-edge-rf-header-spresense
 - プログラム（PDF）：https://www.iee.jp/eiss/wp-content/uploads/sites/4/2025/07/program20250718.pdf
 - 研究の詳細：https://kondo-yuta-my-portfolio.vercel.app/research/pdm-edge
 
@@ -53,6 +55,7 @@ AI 生成コードの安全確認を、コードを採用するかどうかを�
 
 LoRa 通信と AI を組み合わせて、設備の振動を遠隔から監視するシステムの発表で、奨励賞をいただきました。2024 年の SPRESENSE 活用コンテストに出した振動解析の作品と同じテーマです。
 
+- 記事（2024 年の作品と U-21 の発表）：https://zenn.dev/kd_yuta/articles/spresense-lora-vibration-2024
 - 受賞者の一覧：https://www.iee.jp/u-21-2025-award/
 
 ## 受賞
@@ -80,8 +83,9 @@ LoRa 通信と AI を組み合わせて、設備の振動を遠隔から監視�
 - 2024 年 クレスコ ELTRESアドオンボード優秀賞：[SPRESENSEとELTRES通信でCO2濃度をマッピング](https://elchika.com/article/504f286c-413b-47d3-89f9-38920ca5e5c7/)
 - 2024 年 LoRa活用アイデア賞、JBAT Qanat Universe賞：[SPRESENSEと振動解析による設備保全の最前線](https://elchika.com/article/ac986cc9-5c24-4778-952d-a3ec8dca25d0/)
 
-受賞作品の一覧は、[2025 年](https://elchika.com/promotion/spresense2025/winner/)と[2024 年](https://elchika.com/promotion/spresense2024/winner/)の発表ページにあります。Elchika ではユーザー名 kd_yuta で投稿しています。コンテストの後に作り直した内容は、次の記事に書きました。
+受賞作品の一覧は、[2025 年](https://elchika.com/promotion/spresense2025/winner/)と[2024 年](https://elchika.com/promotion/spresense2024/winner/)の発表ページにあります。Elchika ではユーザー名 kd_yuta で投稿しています。作品の記事と、コンテストの後に作り直した内容は、次の記事に書きました。
 
+- 振動の監視の作品（2024 年）：https://zenn.dev/kd_yuta/articles/spresense-lora-vibration-2024
 - 点検ドローンの作り直し：https://zenn.dev/kd_yuta/articles/spresense-drone-contest-2025
 - 点検ドローンの証跡ストア：https://zenn.dev/kd_yuta/articles/droneinspector-evidence-store
 - 点検ドローンの改善案 6 つの比較：https://zenn.dev/kd_yuta/articles/droneinspector-six-layers
