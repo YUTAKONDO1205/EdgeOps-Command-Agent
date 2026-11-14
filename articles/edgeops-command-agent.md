@@ -1,53 +1,51 @@
 ---
-title: "異常検知で終わらせない。現場保全の判断と行動を支援するAIエージェントをAzureで作った"
+title: "現場保全の判断と行動を支援する AI エージェントを Azure で作りました（EdgeOps Command Agent）"
 emoji: "🛠"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["azure", "openai", "semantickernel", "python", "ai"]
 published: true
 ---
 
-![EdgeOps Command Agent ― 点検データを8つのAIエージェントが判断・原因・初動・報告へ変換する](/images/edgeops/eyecatch.png)
+![EdgeOps Command Agent：点検データを 8 つの AI エージェントが判断、原因、初動、報告へ変換する](/images/edgeops/eyecatch.png)
 
-> 🏆 **Microsoft Agent Hackathon powered by Tokyo Electron Device 特別賞受賞**
+近藤悠太です。Microsoft Agent Hackathon powered by Tokyo Electron Device に、設備保全の判断と行動を支援する AI エージェント「EdgeOps Command Agent」を出し、特別賞（個人部門）をいただきました。この記事では、作ったものの構成と、判断を LLM に任せない部分の設計、評価の方法を紹介します。
 
-## TL;DR
-
-- **課題**: 設備保全は「異常検知」で止まりがち。**危険判断・原因推定・初動・報告が属人化**し、若手は次に何をすべきか分からない。
-- **解決**: 点検データを **異常判断 → 原因推定 → 作業指示 → 管理者報告書** に変換する **8 Agent** のマルチエージェント。
-- **価値（円で算出）**: Motor-02 が Critical のとき、早期介入で **約 ¥2,107,800 を回避**（LLM に計算させず、実績CSVから決定論で導出・監査可能）。
-- **動く証拠**: 5設備×4強度=20プリセットで **20/20・ポリシーチェック 109/109 合格**。全提案に **人間承認ゲート＋監査ログ**。
-
-🎥 約5分デモ → https://youtu.be/N-M7Sm0fNi8　📦 コード → https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
+- デモ動画（約 5 分）：https://youtu.be/N-M7Sm0fNi8
+- リポジトリ：https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent
 
 :::message
-**【追記 2026-07-09】ハッカソン終了に伴い、ライブデモ環境（Azure）は停止・削除しました。**
+**【追記 2026-07-09】ハッカソンの終了にあわせて、ライブデモの環境（Azure）を停止し、削除しました。**
 
-当初この位置に掲載していた Azure Container Apps の URL は、現在アクセスできません。動作はデモ動画でご覧いただけるほか、リポジトリを clone すれば **Azure のクレデンシャルなしで**（Mock mode に自動フォールバックします）ローカルで全機能を試せます。手順は「10. Azure 構成とデプロイ」の末尾に置きました。
+当初この位置に載せていた Azure Container Apps の URL には、現在アクセスできません。動作はデモ動画で見られるほか、リポジトリを clone すれば、Azure の認証情報なしで（Mock mode に自動で切り替わります）全機能をローカルで試せます。手順は「ハッカソンの後の扱い」の節に置きました。
 
-**実際の Azure 環境で触ってみたいという方は、ご連絡ください。** この記事のコメント欄、または [GitHub Issue](https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues) からお声がけいただければ、環境を再展開してご案内します。
+実際の Azure の環境で試したい方は、この記事のコメント欄か [GitHub Issue](https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues) からご連絡ください。環境を展開し直してご案内します。
 :::
 
-> **異常検知で終わらせない。** ―― 本プロジェクトは、この一点に全機能を寄せて設計しました。
+## 概要
 
-私はこれまで Sony Spresense と振動・音響センサを用いた異常検知システムを研究してきました。その中で痛感したのは、**異常を検出するだけでは現場の行動は変わらない**ということです。本当に必要なのは「何が起きているのか」「なぜ起きたのか」「誰が次に何をすべきか」まで判断材料を整理すること。そこで開発したのが **EdgeOps Command Agent** です。
+- 点検データを、異常の判断、原因の推定、作業指示、管理者向けの報告書に変換する、8 つのエージェントの構成です。
+- Motor-02 が Critical のとき、早く介入すれば約 ¥2,107,800 の損失を避けられると試算します。金額は LLM に計算させず、デモ用の CSV から決定論的に出します。
+- 5 設備と 4 種類のデータを組み合わせた 20 プリセットで、ポリシーの検査 109 件にすべて合格しました。すべての提案に、人間の承認のゲートと監査ログを付けています。
 
-## 1. 解決したい業務課題
+## 作った理由
 
-設備保全の現場では、判断材料が **バラバラに** 存在しています。
+私はこれまで、SPRESENSE と振動や音響のセンサを使った異常検知を研究してきました。その中で、異常を検出するだけでは現場の行動は変わらないと考えるようになりました。現場では、何が起きているのか、なぜ起きたのか、誰が次に何をすべきかまで、判断の材料を整理する必要があります。
 
-- センサー値・振動/音響ログ
-- 点検写真・点検メモ
-- 設備マニュアル・点検基準
-- 過去の故障履歴・作業報告書
-- 部品在庫・作業者の経験
+設備保全の現場では、判断の材料が別々の場所にあります。
 
-異常が起きても、**「これは本当に危険なのか」「原因は何か」「今すぐ止めるべきか」「誰が何を確認すべきか」「報告書にどう書くか」** の判断が属人化しています。ベテランの頭の中にしかなく、若手は次の一手が分かりません。異常検知 AI を入れても、ここが埋まらなければ現場は動きません。
+- センサの値、振動と音響のログ
+- 点検の写真とメモ
+- 設備のマニュアルと点検の基準
+- 過去の故障の履歴と作業報告書
+- 部品の在庫と作業者の経験
 
-## 2. いくら得するのか ―― 経済効果を定量化する（ROI）
+異常が起きたとき、本当に危険か、原因は何か、今すぐ止めるべきか、誰が何を確認すべきか、報告書にどう書くか、という判断は属人化しています。手がかりがベテランの頭の中にしかないと、若手は次に何をすればよいか分かりません。異常検知の AI を入れても、この判断の部分は残ります。
 
-「異常を早く見つけると何円得するのか」を曖昧にしないため、**判断の経済効果を自動算出**する決定論モジュール（`src/business_case.py`）を入れました。**LLM には一切計算させず**、出荷済みの CSV（`failure_history.csv` の実停止時間、`parts_inventory.csv` の部品単価・在庫・リードタイム）から監査可能な金額を出します。
+## 経済効果の試算
 
-モデルは「放置（計画外停止）」と「早期介入（計画停止）」の差分です。
+異常を早く見つけると何円の損失を避けられるかを示すため、判断の経済効果を計算するモジュール（`src/business_case.py`）を入れました。計算は LLM に任せず、リポジトリに同梱したデモ用の CSV（`failure_history.csv` の停止時間、`parts_inventory.csv` の部品の単価、在庫、リードタイム）から決定論的に出すので、金額の根拠を後からたどれます。
+
+計算は、放置した場合（計画外停止）と、早く介入した場合（計画停止）の差です。
 
 ```
 放置コスト     = 計画外停止 downtime_h × ライン停止コスト/h ＋ 緊急部品（割増）
@@ -56,49 +54,47 @@ published: true
 期待回避コスト = 回避コスト × 悪化確率（リスクレベル依存）
 ```
 
-たとえば **Motor-02 が Critical** のとき（過去実績 7h 停止・軸受 BRG-M02-6206ZZ）:
+たとえば Motor-02 が Critical のとき（デモの故障履歴で 7 時間の停止、軸受は BRG-M02-6206ZZ）は、次のようになります。Critical の悪化確率は 1.0 と置いているので、期待回避コストは回避コストと同じ値です。
 
 | 項目 | 金額 |
 |---|---|
-| 放置時コスト（計画外停止7h＋緊急部品） | ¥2,123,400 |
-| 早期介入時コスト（計画停止・通常調達） | ¥15,600 |
-| **期待回避コスト** | **¥2,107,800** |
+| 放置したときのコスト（計画外停止 7 時間と緊急の部品） | ¥2,123,400 |
+| 早く介入したときのコスト（計画停止と通常の調達） | ¥15,600 |
+| 期待回避コスト | ¥2,107,800 |
 
-さらに Motor-02 の軸受は **在庫0・調達5日**。早期検知できれば 5 日前倒しで手配でき、「即日対応できない」リスクそのものを消せます。この金額と調達リスクを Command Center の影響カードと管理者報告書の冒頭（推奨判断）に出します。ライン停止コストの前提（既定 ¥300,000/h）は `EDGEOPS_LINE_STOP_COST_JPY_PER_HOUR` で顧客値に差し替え可能で、前提は画面・報告書に明記します。
+Motor-02 の軸受は在庫が 0 で、調達に 5 日かかります。早く検知できれば、その 5 日を先に手配に使えます。この金額と調達のリスクは、Command Center の影響範囲のカードと、管理者向けの報告書の冒頭（推奨する判断）に表示します。ライン停止のコスト（既定は 1 時間あたり ¥300,000）は `EDGEOPS_LINE_STOP_COST_JPY_PER_HOUR` で現場の値に差し替えられ、置いた前提は画面と報告書に書き出します。
 
-![Command Center の影響範囲カード：Motor-02 Critical で早期介入の想定回避コスト ¥2,107,800、軸受の調達リスク（在庫0・調達5日）、下流設備（コンベア-2 / 充填ライン3）への波及を一望](/images/edgeops/roi-card.png)
+![Command Center の影響範囲のカード：Motor-02 が Critical のとき、早期介入で想定される回避コスト ¥2,107,800、軸受の調達リスク（在庫 0、調達 5 日）、下流の設備（コンベア-2、充填ライン 3）への波及を表示する](/images/edgeops/roi-card.png)
 
-## 3. 作ったもの
+## 作ったもの
 
-**EdgeOps Command Agent** は、点検データを読み取り、
+EdgeOps Command Agent は、点検データを読み取ってから、次の順に処理します。
 
-1. **Intake Agent** が入力データの品質を検証し
-2. 異常傾向を検出（**ルールベース**で監査可能に）
-3. 原因仮説を尤度付きで出し（**Multi-Agent**）
-4. マニュアル根拠を引き（**RAG**）
-5. 作業指示を生成し
-6. 管理者向け報告書を生成し
-7. **Governance Agent** が不確実性を集約して **人間承認** に回す
+1. 入力データの品質の検証（Intake Agent）
+2. 異常の傾向の検出（ルールベース）
+3. 尤度を付けた原因の仮説（複数のエージェント）
+4. マニュアルからの根拠の検索（RAG）
+5. 作業指示の生成
+6. 管理者向けの報告書の生成
+7. 不確実性の集約と、人間の承認への引き渡し（Governance Agent）
 
-までを一気通貫で行います。8 つの Agent がそれぞれ単一責任を持ち、Root Cause Agent が中央で他 Agent の出力を統合します。
-
-🎥 **まずは約5分のデモ動画でご覧ください**（やや長めですが、全機能を通しでご覧いただけます）:
+8 つのエージェントはそれぞれ 1 つの役割だけを持ち、Root Cause Agent がほかのエージェントの出力をまとめます。デモ動画（約 5 分）で、全機能を通して見られます。
 
 https://youtu.be/N-M7Sm0fNi8
 
 ### 画面構成
 
-7つのタブで業務フロー全体を再現:
+画面は 7 つのタブに分け、業務の流れを順にたどれるようにしました。
 
-1. **Command Center** — 設備一覧とリスク状態・回避コスト
-2. **Data Upload** — **生データCSV取り込み（列自動マッピング＋fs推定）** / 画像 / メモ / マニュアル投入
-3. **Signal Analysis** — 時系列・FFT・統計量・ルール判定
-4. **Vision Inspection** — 写真と AI 所見
-5. **Agent Reasoning** — Multi-Agent の思考過程 ＋ 根拠付き追質問Q&A
-6. **Work Order** — 作業指示書（承認ボタン付き）
-7. **Management Report** — 管理者向け1ページ報告書
+1. Command Center：設備の一覧、リスクの状態、回避コスト
+2. Data Upload：生データの CSV の取り込み（列の自動マッピングとサンプリング周波数の推定）、画像、メモ、マニュアルの投入
+3. Signal Analysis：時系列、FFT、統計量、ルールによる判定
+4. Vision Inspection：写真と AI の所見
+5. Agent Reasoning：エージェントごとの判断の過程と、根拠を示した追加の質問への回答
+6. Work Order：作業指示書（承認のボタン付き）
+7. Management Report：管理者向けの 1 ページの報告書
 
-## 4. システム構成
+## システム構成
 
 ![EdgeOps Command Agent Architecture](/images/edgeops/architecture.png)
 
@@ -118,68 +114,68 @@ https://youtu.be/N-M7Sm0fNi8
 [Cosmos DB 監査ログ] [Blob 画像/PDF] [Teams 通知] [Event Hubs (Spresense)]
 ```
 
-| レイヤ | 採用技術 |
+| レイヤ | 採用した技術 |
 |--------|----------|
-| アプリ | Python + Streamlit（メインデモ）／ Next.js + FastAPI（別実装の SaaS 風 UI） |
-| 信号解析 | pandas / numpy / scipy（FFT, RMS, Welch PSD） |
+| アプリ | Python と Streamlit（メインのデモ）／ Next.js と FastAPI（別に実装した SaaS 風の UI） |
+| 信号の解析 | pandas、numpy、scipy（FFT、RMS、Welch の PSD） |
 | グラフ | Plotly |
-| Agent 制御 | **Semantic Kernel**（`Kernel` + `AzureChatCompletion`）が一次経路。失敗時のみ Azure OpenAI SDK 直叩きにフォールバック |
+| エージェントの制御 | Semantic Kernel（`Kernel` と `AzureChatCompletion`）が主の経路。失敗したときだけ Azure OpenAI の SDK を直接呼ぶ経路に切り替え |
 | 生成AI | Azure OpenAI（Microsoft Foundry） |
-| 画像解析 | Azure OpenAI Vision 対応モデル（マルチモーダル）|
-| RAG | 3段ディスパッチ: Azure AI Search → ローカル txt → アップロード PDF（インターフェース互換） |
-| データ保存 | **Azure Blob**（画像/PDF）＋ **Azure Cosmos DB**（承認ログ/実行履歴/通知履歴）。未設定時はローカル `_uploaded/` / JSONL に自動フォールバック |
-| 通知 / エッジ | **Microsoft Teams**（Adaptive Card v1.4）＋ **Azure Event Hubs**（Spresense ストリーム）。いずれもローカルフォールバックあり |
-| 実行基盤 | Azure Container Apps（`az containerapp up --source .`、CD は GitHub Actions） |
-| 監査 | 承認 / 修正依頼 / 却下＋理由テキスト＋ Cosmos 監査ログ＋ JSON/CSV エクスポート |
+| 画像の解析 | Azure OpenAI の Vision 対応モデル（マルチモーダル） |
+| RAG | 3 段の切り替え：Azure AI Search、ローカルの txt、アップロードした PDF（インターフェースは共通） |
+| データの保存 | Azure Blob（画像と PDF）と Azure Cosmos DB（承認のログ、実行の履歴、通知の履歴）。未設定のときはローカルの `_uploaded/` と JSONL に自動で切り替え |
+| 通知とエッジ | Microsoft Teams（Adaptive Card v1.4）と Azure Event Hubs（SPRESENSE のストリーム）。どちらもローカルでの代替あり |
+| 実行の基盤 | Azure Container Apps（`az containerapp up --source .`、CD は GitHub Actions） |
+| 監査 | 承認、修正依頼、却下と理由の文章、Cosmos の監査ログ、JSON と CSV での書き出し |
 
-## 5. Agent 設計 ―― なぜ「マルチエージェント」なのか
+## エージェントの設計
 
-Agent は単一責任に分け、Root Cause Agent が他 Agent の出力を統合する形にしています。
+エージェントごとの役割と、不確実性を表す出力の項目は次のとおりです。
 
-| # | Agent | 役割 | 不確実性管理 |
+| # | Agent | 役割 | 不確実性を表す出力 |
 |---|-------|------|--------------|
-| 1 | **Intake** | 入力データの品質・欠損・期間妥当性をパイプライン入口で検証 | `data_quality` (good/acceptable/degraded), `downstream_warnings` |
-| 2 | Signal Insight | センサー特徴量を所見に翻訳 | `uncertainty_notes` |
-| 3 | Vision Inspection | 写真から外観異常候補（領域 + severity + bbox + crop）を出す | `confidence_score`, `human_confirmation_required` |
-| 4 | Manual RAG | マニュアルから判断ルールを引く（Azure AI Search 互換） | `applicable_rules` の `judgement` |
-| 5 | Root Cause | ②③④ を統合し、原因仮説を尤度付きで3つ出す | `uncertainty`, `human_confirmation_required` |
-| 6 | Action Planning | 作業手順・工具・部品・安全注意を組み立てる | `manager_approval_required` |
-| 7 | What-if Simulator | 「今点検 / 3日後 / 1週間放置」の対応タイミング別リスク比較 | `recommended` フラグ |
-| 8 | **Governance** | 全 Agent の出力を集約し、人間承認の確認項目を提示するゲートウェイ | `overall_confidence`, `auto_executable`, `fallback_used` |
-| ＋ | Report | 管理者向け1ページ報告書（render 時呼び出し） | — |
+| 1 | Intake | 入力データの品質、欠損、期間の妥当性を、パイプラインの入口で検証 | `data_quality` (good/acceptable/degraded), `downstream_warnings` |
+| 2 | Signal Insight | センサの特徴量を所見に翻訳 | `uncertainty_notes` |
+| 3 | Vision Inspection | 写真から外観の異常の候補（領域、severity、bbox、crop）を出す | `confidence_score`, `human_confirmation_required` |
+| 4 | Manual RAG | マニュアルから判断のルールを引く（Azure AI Search 互換） | `applicable_rules` の `judgement` |
+| 5 | Root Cause | ②③④ を統合し、尤度を付けた原因の仮説を 3 つまで出す | `uncertainty`, `human_confirmation_required` |
+| 6 | Action Planning | 作業の手順、工具、部品、安全の注意を組み立てる | `manager_approval_required` |
+| 7 | What-if Simulator | 今点検、3 日後、1 週間放置の、対応の時期ごとのリスクを比べる | `recommended` フラグ |
+| 8 | Governance | 全エージェントの出力を集約し、人間が承認するときの確認項目を示すゲートウェイ | `overall_confidence`, `auto_executable`, `fallback_used` |
+| ＋ | Report | 管理者向けの 1 ページの報告書（描画のときに呼び出す） | — |
 
-### 「LLM を1回呼ぶ」では足りない理由
+### 1 回の実行での判断の流れ
 
-「マルチエージェントです」と言うだけなら誰でも言えます。本作で重要なのは、**各 Agent が単一責任で次の Agent に判断材料を引き渡し、最後に Governance がゲートを閉じる**という、課題に対して論理的な分業になっている点です。実際に Motor-02 が Critical のときの 1 実行は、こう流れます。
+Motor-02 が Critical のときの 1 回の実行では、各エージェントが次のように結論を出して、次のエージェントに渡します。最後に Governance がゲートを閉じます。
 
 | Agent | この実行での結論（要約） |
 |---|---|
-| Intake | 入力 4 ソース揃い `data_quality=good`。観測 4.0s で傾向解析に十分 |
-| Signal Insight | 振動RMS・軸受帯（100–300Hz）エネルギーが同時上昇。軸受異常帯域にピーク |
-| Vision | フレーム表面に錆び/腐食の進行（severity=severe, confidence 88） |
-| Manual RAG | 「軸受温度しきい値超過は Critical」「振動＋温度同時上昇は軸受摩耗を疑う」が **該当** |
-| Root Cause | 仮説①軸受摩耗（**likelihood: high**）／②固定部緩み（medium）／③潤滑不良（medium） |
-| Action Planning | priority=Critical, **deadline 24h**, 必要部品 BRG-M02-6206ZZ, **管理者承認必須** |
-| What-if | 今点検=低リスク（**推奨**）／3日後=中／**1週間放置=高（非推奨）** |
-| Governance | overall_confidence、**`auto_executable=false`（人間承認ゲート）**、確認項目と安全制約を提示 |
+| Intake | 入力 4 ソースが揃い `data_quality=good`。観測は 4.0 s で、傾向の解析に足りる |
+| Signal Insight | 振動の RMS と軸受の帯域（100〜300 Hz）のエネルギーが同時に上昇。軸受の異常の帯域にピーク |
+| Vision | フレームの表面に錆と腐食の進行（severity=severe、confidence 88） |
+| Manual RAG | 「軸受温度のしきい値の超過は Critical」「振動と温度の同時の上昇は軸受の摩耗を疑う」が該当 |
+| Root Cause | 仮説①軸受の摩耗（likelihood: high）／②固定部の緩み（medium）／③潤滑の不良（medium） |
+| Action Planning | priority=Critical、deadline 24h、必要な部品 BRG-M02-6206ZZ、管理者の承認が必須 |
+| What-if | 今点検＝低リスク（推奨）／3 日後＝中／1 週間放置＝高（非推奨） |
+| Governance | overall_confidence、`auto_executable=false`（人間の承認のゲート）、確認項目と安全の制約を提示 |
 
-単体の LLM 呼び出しでは、この「**誰がどの根拠で何を結論したか**」が1つの文章に溶けてしまい、監査も差し替えもできません。責任分割しているからこそ、**Manual RAG だけ Azure AI Search に差し替える / Vision だけ別モデルにする**といった現場適合が効きます。
+LLM を 1 回呼び出すだけの構成では、誰がどの根拠で何を結論したかが 1 つの文章に混ざり、後から監査することも、一部だけを差し替えることも難しくなります。役割を分けておけば、Manual RAG だけを Azure AI Search に替える、Vision だけを別のモデルにする、といった現場ごとの調整ができます。
 
-![Agent Reasoning タブ：8つのエージェントが順に判断材料を積み上げ（各カードは Azure OpenAI 実行）、最後に人間承認ゲートへ渡る思考トレース](/images/edgeops/agent-reasoning.png)
+![Agent Reasoning タブ：8 つのエージェントが順に判断の材料を積み上げ（各カードは Azure OpenAI で実行）、最後に人間の承認のゲートへ渡す判断の過程](/images/edgeops/agent-reasoning.png)
 
-### なぜ「ルールベース判定」と「LLM 推論」を分けたか
+### ルールベースの判定と LLM の分担
 
-設備保全で AI に最終判断を委ねるのは現状非現実的です。**Risk Level は監査可能でなければならない**ため、しきい値による分類（`src/risk_engine.py`）は LLM の外側に固定しました。LLM が担うのは「数値の解釈」「自然言語化」「原因仮説」「報告書生成」だけです。判定の根拠を後から追えるようにするための線引きで、ここを設計の核にしました。
+設備保全では、最終の判断を AI に任せることは、今のところ現実的ではないと考えました。リスクのレベルは後から根拠をたどれる必要があるので、しきい値による分類（`src/risk_engine.py`）は LLM の外に置いています。LLM に任せるのは、数値の解釈、文章にすること、原因の仮説、報告書の生成だけです。
 
-## 6. プロンプト設計の工夫
+## プロンプトの設計
 
-すべての Agent 出力は **JSON** に固定し、`response_format={"type": "json_object"}` で構造化しました。設計原則は3つ:
+すべてのエージェントの出力は JSON に固定し、`response_format={"type": "json_object"}` で構造化しました。プロンプトでは、次のことを求めています。
 
-1. **断定禁止**: 「腐食です」ではなく「腐食の可能性があります」
-2. **不確実性の明示**: 各 Agent が `uncertainty` と `human_confirmation_required` を返す
-3. **根拠と推測を分ける**: `evidence` / `root_cause_hypotheses` の構造化
+1. 断定しない（「腐食です」ではなく「腐食の可能性があります」と書く）
+2. 不確実性を明示する（各エージェントが `uncertainty` と `human_confirmation_required` を返す）
+3. 根拠と推測を分ける（`evidence` と `root_cause_hypotheses` を別の項目にする）
 
-例: Root Cause Agent のプロンプト（一部）
+Root Cause Agent のプロンプトの一部です。
 
 ```python
 ROOT_CAUSE_AGENT_PROMPT = """\
@@ -206,28 +202,28 @@ ROOT_CAUSE_AGENT_PROMPT = """\
 """
 ```
 
-## 7. 「分からない」と言えるAI ―― 判断困難ケース
+## 判断が難しいデータ
 
-デモ用に4種類のセンサーCSV を用意しました。
+デモ用に、4 種類のセンサの CSV を用意しました。
 
-| データ | 状態 | 見せたい価値 |
+| データ | 状態 | 確かめたい挙動 |
 |--------|------|--------------|
-| `normal_sensor.csv` | 正常 | AIが過剰反応しない |
-| `warning_sensor.csv` | 軽度異常 | 経過観察と追加確認を提案 |
-| `critical_sensor.csv` | 深刻異常 | 作業指示・報告書まで生成 |
-| `ambiguous_sensor.csv` | **判断困難** | **不確実性と人間確認を出す** |
+| `normal_sensor.csv` | 正常 | AI が過剰に反応しない |
+| `warning_sensor.csv` | 軽度の異常 | 経過の観察と追加の確認を提案する |
+| `critical_sensor.csv` | 深刻な異常 | 作業指示と報告書まで生成する |
+| `ambiguous_sensor.csv` | 判断が難しい | 不確実性と、人による確認を出す |
 
-特に `ambiguous` は本作の主張そのものです。多くの AI デモは「答えを出して終わり」ですが、本システムは **断片的なスパイク** に対して「確信度低、現場確認推奨」と返します。自信たっぷりに間違えるより、正直に「分からない」と言って人間に渡す方が現場では信頼されます。これが実務で本当に欲しい挙動です。
+このうち `ambiguous` は、断片的なスパイクだけを含むデータです。このデータには、確信度を低くし、現場での確認を勧める出力を返します。確信が持てないときに答えを断定せず、人に判断を渡すことを、この作品で最も重視しました。
 
-## 8. Human-in-the-loop
+## 人間の承認（Human-in-the-loop）
 
-すべての提案には「人間承認が必要」フラグが付与され、UI 上で **承認 / 修正依頼 / 却下** を選べます。これは飾りではなく、Work Order と Management Report の両方に承認ウィジェットを実装し、**承認・却下・修正依頼の理由テキスト**を残して **Cosmos DB に監査ログ**として永続化（JSON/CSV エクスポート可）しています。設備保全に AI を入れるとき必ず要る合意形成のプロセスを、画面の機能として作り込みました。
+すべての提案には人間の承認が必要だという印が付き、画面で承認、修正依頼、却下のどれかを選びます。Work Order と Management Report の両方に承認の部品を置き、選んだ理由の文章とあわせて、Cosmos DB に監査ログとして残します（JSON と CSV で書き出せます）。設備保全に AI を入れるときに要る合意の手続きを、画面の機能として作りました。
 
-![Work Order の人間承認ウィジェット：承認／修正依頼／却下を理由テキスト付きで選べ、判断は監査ログに永続化される](/images/edgeops/work-order-approval.png)
+![Work Order の人間の承認の部品：承認、修正依頼、却下を理由の文章とともに選べ、判断は監査ログに残る](/images/edgeops/work-order-approval.png)
 
-## 9. 軸受異常を周波数帯から特定する
+## 軸受の帯域のエネルギー比
 
-センサー解析の見せ場として、**100–300Hz 帯のエネルギー比率** を入れました。遠心ポンプの軸受異常は、シャフト回転周波数（50Hz）の高調波として 100Hz / 240Hz 付近にピークが現れます。
+信号の解析には、100〜300 Hz の帯域のエネルギーが全体に占める比を入れました。デモのセンサデータは、回転数 50 Hz の遠心ポンプを想定して合成したもので、軸受の異常として 120 Hz と 240 Hz の成分を加えてあります。
 
 ```python
 def _bearing_band_ratio(signal, fs):
@@ -238,11 +234,11 @@ def _bearing_band_ratio(signal, fs):
     return band / total
 ```
 
-Critical デモでは比率が **0.69**（正常時は 0.10 程度）。FFT グラフ上にも 120Hz のピークがはっきり見えます。これは私の Spresense × 振動センサ研究で扱ってきた手法そのものです。
+Critical のデモデータでは、この比が 0.69 になります（正常のデータでは 0.10 程度）。FFT のグラフにも 120 Hz のピークが出ます。FFT で周波数の特徴量を作る処理は、SPRESENSE と振動センサの研究でも使ってきたものです。
 
-![Signal Analysis タブ：振動・音響・温度の時系列に加え、FFT スペクトラムに 120Hz の軸受帯ピーク（100–300Hz エネルギー比 0.69）が明瞭に現れる](/images/edgeops/fft-peak.png)
+![Signal Analysis タブ：振動、音響、温度の時系列と、FFT のスペクトルに出た 120 Hz の軸受の帯域のピーク（100〜300 Hz のエネルギー比 0.69）](/images/edgeops/fft-peak.png)
 
-## 10. Azure 構成とデプロイ
+## Azure の構成とデプロイ
 
 ```bash
 az login
@@ -256,19 +252,17 @@ az containerapp up \
   --target-port 8501
 ```
 
-これだけです。`az containerapp up --source .` がローカルの Dockerfile をビルドし、ACR にプッシュし、Container Apps を立ち上げます。
+`az containerapp up --source .` は、ローカルの Dockerfile をビルドして ACR にプッシュし、Container Apps を起動します。
 
-> **補足**: Azure CLI 2.86.0 では `az containerapp up --source .` 内部で `OS.linux.value` を参照する箇所が None となり失敗する既知症状に当たりました。回避策として、`az acr create` → `docker build` → `docker push` → `az containerapp env create` → `az containerapp create --image ...` の 5 ステップに分解してデプロイしました（GitHub の README に再現手順を残してあります）。
+ただし、Azure CLI 2.86.0 では、`az containerapp up --source .` の内部で `OS.linux.value` を参照する箇所が None になって失敗しました。そこで、`az acr create`、`docker build`、`docker push`、`az containerapp env create`、`az containerapp create --image ...` の 5 つの手順に分けてデプロイしました（GitHub の README に再現の手順を残しています）。
 
-審査期間中は、審査員がこの URL を開くだけで全機能を試せる状態にしていました。Azure OpenAI のクレデンシャルが未設定の場合は **Mock mode** に自動フォールバックする実装にしてあり、ネットワーク不調時もデモが完走します。
+審査の期間中は、公開した URL を開くだけで全機能を試せるようにしていました。Azure OpenAI の認証情報が設定されていないときは Mock mode に自動で切り替わるので、ネットワークの調子が悪いときもデモは最後まで動きます。推論の本来の経路は Azure OpenAI（Microsoft Foundry）で、Azure に接続できるときは常に実際のモデルを使います（`EDGEOPS_USE_MOCK` か、endpoint と key の有無で切り替えます）。
 
-> 誤解のないよう補足すると、**本番の推論経路は Azure OpenAI（Microsoft Foundry）です。** mock は鍵未設定・ネットワーク不調時にデモを完走させるための **耐障害フォールバック** であり、Azure 接続時は常に実モデルが優先されます（`EDGEOPS_USE_MOCK` または endpoint/key の有無で切替）。「動かないときに止まらない」ことを、実務運用の最低条件として実装しています。
+### ハッカソンの後の扱い
 
-### ハッカソン終了後 ―― リソースを畳み、ローカルで再現できるようにする
+ハッカソンの期間が終わったので、公開デモに使っていた Azure のリソース（Container App 本体と Managed Environment、Container Registry、ログ用の Log Analytics ワークスペース、推論に使っていた Azure OpenAI の `gpt-4o` のデプロイ）は、すべて削除しました。個人で常に起動しておく構成ではないためです。冒頭に載せていたデモの URL も、そのときに停止しました。
 
-ハッカソン期間の終了に伴い、公開デモを支えていた Azure リソース ―― Container App 本体と Managed Environment、Container Registry、ログ用の Log Analytics ワークスペース、そして推論を担っていた Azure OpenAI（`gpt-4o` デプロイ）―― は **すべて削除しました**。個人で常時起動しておく構成ではないためです。冒頭に載せていたデモ URL も、これに伴い停止しています。
-
-ただ、**動かして確かめること自体は Azure なしでできます。** 上で触れた Mock mode の切替は `src/utils.py` の `use_mock_mode()` が担っていて、`EDGEOPS_USE_MOCK` が未指定なら `AZURE_OPENAI_ENDPOINT` と `AZURE_OPENAI_API_KEY` の有無を見て自動判定します。つまり `.env` を置かなければ、そのまま Mock mode で起動します。
+動かして確かめることは、Azure がなくてもできます。Mock mode への切り替えは `src/utils.py` の `use_mock_mode()` が行い、`EDGEOPS_USE_MOCK` が指定されていなければ、`AZURE_OPENAI_ENDPOINT` と `AZURE_OPENAI_API_KEY` の有無で決めます。`.env` を置かなければ、そのまま Mock mode で起動します。
 
 ```powershell
 git clone https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent.git
@@ -279,52 +273,43 @@ pip install -r requirements.txt
 streamlit run app.py   # → http://localhost:8501
 ```
 
-これで 7 タブすべて、8 Agent の思考トレース、4 種のデモデータ（normal / warning / critical / ambiguous）、人間承認フローまで一通り触れます。評価ハーネスも `python scripts/run_eval.py` が mock モードで決定論実行するので、本文の **20/20 プリセット・109/109 チェック** はそのまま手元で再現できます。
+これで、7 つのタブ、8 つのエージェントの判断の過程、4 種類のデモデータ（normal / warning / critical / ambiguous）、人間の承認の流れまでを試せます。評価のハーネス（`python scripts/run_eval.py`）も Mock mode で決定論的に動くので、次の節の 20/20 プリセット、109/109 チェックの結果を手元で再現できます。
 
-**実際の Azure OpenAI に接続した状態で試してみたい**という方は、**ご連絡ください。** この記事のコメント欄、または [GitHub Issue](https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent/issues) にお声がけいただければ、環境を再展開したうえでご案内します。
+## エージェントの品質の検査
 
-## 11. 実務導入を想定した工夫
+8 つのエージェントが設計どおりに振る舞うかを、人手で採点せずに確かめるため、評価のハーネス（`scripts/run_eval.py`）を用意しました。5 設備と 4 種類のデータ（normal / warning / critical / ambiguous）を組み合わせた 20 プリセットを Mock mode で決定論的に実行し、出力がスキーマに合っているか、ポリシーを満たしているかを検査します（GitHub Actions でも `scripts/run_eval.py` と `pytest` を実行しています）。
 
-- **ルールベース判定は LLM の外**で監査可能に
-- **デモデータ4種類**（normal / warning / critical / ambiguous）で過剰反応も判断困難ケースもカバー
-- **断定禁止プロンプト** で「腐食です」ではなく「腐食の可能性があります」
-- **JSON 構造化出力** で UI 表示が崩れない
-- **モックフォールバック** で Azure OpenAI が落ちてもデモが完走
-- **生データ取り込み** で実機CSV（任意の列名・サンプリングレート）も列自動マッピングで解析可能。デモデータ依存にしない
-- **根拠付き追質問Q&A** で解析結果を対話的に深掘り（断定回避・根拠Agent明示）
-- **Markdown ダウンロード** で報告書を Teams や紙にそのまま渡せる
-- **Human-in-the-loop 承認** を UI レベルで実装。承認・却下・修正依頼に **理由テキスト** を残せ、**監査ログ** を JSON で出力可能
-- **Microsoft Teams 通知**（Adaptive Card v1.4）を Command Center に組み込み、Power Automate / Logic Apps による実通知への拡張を意識した形に
-- **影響範囲（インパクト分析）カード** を Command Center に追加。Warning / Critical 時に「影響規模ラベル」「想定停止対応期限」「想定生産影響」「連動・下流設備（例: Pump-03 → Tank-A 送液停止 / Reactor-1 原料供給遅延）」を一望できる。実運用では設備マスタや BOM 連携で依存マップを差し替える設計
+検査する不変条件の一部です。
 
-## 12. エージェント品質をどう検証したか
+- Critical の作業指示は、必ず管理者の承認が必須で、期限が 24 時間以内
+- Normal でないときは `auto_executable=false`（人間の承認のゲートが必ず閉じる）
+- あいまいさを検出したときは `human_confirmation_required=true`
+- What-if は常に今、3 日後、1 週間放置の 3 つのシナリオを返し、放置は `recommended=false`
 
-「8 Agent が『設計どおりに』振る舞う」ことを、人手の採点なしで示すために評価ハーネス（`scripts/run_eval.py`）を用意しました。**5 設備 × 4 強度＝20 プリセット**を mock モードで決定論実行し、出力がスキーマ妥当かつ**ポリシー準拠**かを検証します（CI でも `tests/test_agent_eval.py` が回ります）。
+結果は、20 プリセットのすべてがポリシーを満たし、検査 109 件もすべて合格しました。詳細は `docs/eval_results.md` にあります。ただし、検査の対象は Mock mode の出力で、実際の Azure OpenAI の出力が毎回この条件を満たすことを確かめたものではありません。
 
-検証する不変条件（一部）:
+## 実際の導入を考えて入れた機能
 
-- Critical の作業指示は**必ず管理者承認必須・期限24h以内**
-- 非 Normal は `auto_executable=false`（人間承認ゲートが必ず閉じる）
-- ambiguity 検出時は `human_confirmation_required=true`
-- What-if は常に「今 / 3日後 / 1週間放置」の 3 シナリオを返し、「放置」は `recommended=false`
+ここまでの節で触れたもののほかに、次の機能を入れました。
 
-結果は **20/20 プリセットが全ポリシー合格（総チェック 109/109 件合格）**。詳細マトリクスは `docs/eval_results.md`。「動きました」を主観で言い切らず、満たすべき不変条件として機械検証できる形にしてあります。
+- 実機の CSV の取り込み（任意の列名とサンプリングレートに、列の自動マッピングで対応）
+- 解析結果への追加の質問（根拠にしたエージェントを示し、断定を避けて答える）
+- 報告書の Markdown でのダウンロード（Teams や紙にそのまま渡せる形）
+- Microsoft Teams への通知（Adaptive Card v1.4。Power Automate や Logic Apps による実際の通知へ広げられる形）
+- 影響範囲のカード（Warning と Critical のときに、影響の規模、停止に対応する期限の目安、生産への影響の目安、連動する下流の設備を表示。例：Pump-03 → Tank-A の送液の停止、Reactor-1 の原料の供給の遅れ。実際の運用では、設備マスタや BOM との連携で依存の関係を差し替える前提）
 
-## 13. 今後の展望
+## おわりに
 
-実装済み（Cosmos 永続化・Teams Adaptive Card・Event Hubs/Spresense 取り込み・Azure AI Search RAG）を踏まえ、次の一手:
+研究では、異常を見つけるところまでを何度も作ってきました。EdgeOps Command Agent では、その先の判断を、8 つのエージェントと人間の承認で現場の行動につなげることを試みました。今後は、次のことに取り組む予定です。
 
-- 過去事例（Cosmos 蓄積）を Root Cause Agent の RAG ソースに組み込む事例ベース推論
-- Power Automate と連携した **異常 → Teams 通知 → 承認 → 作業指示配布** のフル業務フロー化
-- ライン停止コスト・BOM・設備マスタの実データ連携で ROI を現場の実数に
-- 実エッジ（Spresense 実機）からの常時ストリーミング運用
+- 過去の事例（Cosmos に蓄積したもの）を Root Cause Agent の RAG の情報源に組み込み、事例に基づいて推論する
+- Power Automate と連携し、異常、Teams への通知、承認、作業指示の配布までを 1 つの業務の流れにする
+- ライン停止のコスト、BOM、設備マスタを実際のデータと連携し、経済効果の試算を現場の値で出す
+- SPRESENSE の実機から常にデータを流して運用する
 
----
+ライブ環境はハッカソンの終了とともに停止しましたが、手元で動かす手順は「ハッカソンの後の扱い」の節に残しました。実際の Azure の環境で試したい方は、コメント欄か GitHub Issue からご連絡ください。
 
-研究では「異常を見つける」ところまで何度も作ってきましたが、その先の判断を現場が動く形にするのは、検知とはまったく別の難しさでした。EdgeOps Command Agent は、その先を 8 つの Agent と人間承認で埋めようとした試みです。
+Microsoft Agent Hackathon powered by Tokyo Electron Device で、この作品を特別賞に選んでいただきました。運営と審査員の皆様、開発を支えてくださった方々に感謝します。
 
-同じように「検知のその先」で詰まっている方の手がかりになれば嬉しいです。デモ動画とソースコードは冒頭に置いてあります。ライブ環境はハッカソンの終了とともに畳みましたが、手元で動かす手順は 10 章の末尾に残しました。実際の Azure 環境で触ってみたい方は、コメント欄か GitHub Issue からご連絡ください。
-
----
-
-最後に、**Microsoft Agent Hackathon powered by Tokyo Electron Device** にて本プロジェクトを **特別賞** に選んでいただきました。運営の皆様、審査員の皆様、開発を支えてくださったすべての方に心より御礼申し上げます。ありがとうございました。
+- デモ動画：https://youtu.be/N-M7Sm0fNi8
+- リポジトリ：https://github.com/YUTAKONDO1205/EdgeOps-Command-Agent

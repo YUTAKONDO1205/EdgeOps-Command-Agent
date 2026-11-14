@@ -101,7 +101,7 @@ def main() -> None:
     draw.rounded_rectangle((PAD, PAD, W - PAD, PAD + 88), radius=16,
                             fill=(15, 23, 42), outline=None)
     _text(draw, (PAD + 28, PAD + 14),
-          "EdgeOps Command Agent — System Architecture",
+          "EdgeOps Command Agent: System Architecture",
           f_title, fill=(255, 255, 255))
     _text(draw, (PAD + 28, PAD + 62),
           "Microsoft Agent Hackathon 2026  ·  Azure × Multi-Agent × Edge AI",
@@ -116,7 +116,7 @@ def main() -> None:
     _text(draw, (PAD + 24, y + 12),
           "① Edge / Ingest", f_h2, fill=EDGE_TEAL)
     blocks = [
-        ("Spresense\n(振動 / 音響 / 温度 / 電流)", PAD + 24),
+        ("SPRESENSE\n(振動 / 音響 / 温度 / 電流)", PAD + 24),
         ("Sensor CSV /\nFFT 特徴量", PAD + 280),
         ("点検写真\n(複数アングル可)", PAD + 540),
         ("PDF マニュアル\n+ 故障履歴 + 部品在庫", PAD + 800),
@@ -147,7 +147,8 @@ def main() -> None:
          border=AGENT_PURPLE, radius=18)
     _text(draw, (PAD + 24, y + 12),
           "② Multi-Agent Orchestrator", f_h2, fill=AGENT_PURPLE)
-    _text(draw, (PAD + 360, y + 22),
+    sub_x = PAD + 24 + int(draw.textlength("② Multi-Agent Orchestrator", font=f_h2)) + 28
+    _text(draw, (sub_x, y + 22),
           "Semantic Kernel `Kernel` + `AzureChatCompletion`  ·  Azure OpenAI (Microsoft Foundry)  ·  Mock fallback",
           f_small, fill=MUTED)
 
@@ -207,7 +208,7 @@ def main() -> None:
     y += 22
 
     # ── Layer 3: Outputs ─────────────────────────────────────────────
-    out_h = 130
+    out_h = 146
     _box(draw, (PAD, y, W - PAD, y + out_h), fill=(255, 247, 237),
          border=ALERT_ORANGE, radius=18)
     _text(draw, (PAD + 24, y + 12),
@@ -233,7 +234,7 @@ def main() -> None:
     y += out_h + 24
 
     # ── Layer 4: Data / Persistence ─────────────────────────────────
-    persist_h = 110
+    persist_h = 118
     _box(draw, (PAD, y, W - PAD, y + persist_h), fill=(219, 234, 254),
          border=AZURE_BLUE, radius=18)
     _text(draw, (PAD + 24, y + 12),
