@@ -33,6 +33,8 @@ PR のレビューは、閲覧時と統合前の両方を含みます。論文�
 
 検証用のプロトタイプとして作ったのが VibeGuard です。VS Code 拡張、Chrome 拡張、CLI、GitHub Actions の 4 つのクライアントが、同じ解析エンジン（analyzer-core）と同じ検出結果の形式（Finding）を共有します。各クライアントは解析する対象を渡して結果を受け取るだけで、判定のロジックを持ちません。
 
+![作成時・閲覧時・統合前の 3 つの採用判断点に、同じ解析エンジン analyzer-core と検出結果の形式 Finding を置く構成](/images/ses2026-vibeguard-adoption-points/fig1-adoption-points.png)
+
 検出結果には severity（深刻度）と confidence（確信度）の 2 つの軸があります。コメントやテスト用のパスで見つかったものは confidence を下げますが、下げてよい下限を severity で決めています。
 
 ```text
@@ -54,6 +56,10 @@ c' = max(c0 − Σ p_i, min(c0, f(s)))
 - **実行時間（E5）**：CLI の実行時間（Node.js の起動を含む 3 回の中央値）は、1 ファイルで 120 ms、サンプル一式で 151 ms、リポジトリ全体で 1.8 s でした。
 - **公開 OSS への適用（E6）**：8 言語 11 件の公開リポジトリ（計約 474 KLOC）で 1,385 件を検出しました。ただし、全体の 78% は `http://` を対象とする 1 つの low のルールによるもので、検出の 74% はテスト・文書・フィクスチャの中にありました。各検出が実際の脆弱性だとは主張していません。
 - **確信度の補正（E7）**：confidence が medium 以上の 230 件に、同じ系統の大規模言語モデル 3 つの多数決（Fleiss の κ = 0.856）でラベルを付けました。補正の下限を外すと、本番の経路にある指摘の割合は 26.5% から 48.8% に上がりました。一方、出荷する構成では下限がこれを押し戻すので、確認の手間は減りません。
+
+![評価 E2：VibeGuard の 51 件のうち Semgrep の既定ルールと重なったのは 12 件、VibeGuard だけ 39 件（うち ai-quality 15 件）、Semgrep だけ 2 件](/images/ses2026-vibeguard-adoption-points/fig2-vulnerable-samples.png)
+
+![評価 E6：公開 OSS 11 件で 1,385 件を検出。78% は http:// を対象とする 1 つの low ルール、74% はテスト・文書・フィクスチャの中](/images/ses2026-vibeguard-adoption-points/fig3-oss.png)
 
 ## 論文に書いた限定
 
