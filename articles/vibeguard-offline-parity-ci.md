@@ -33,6 +33,8 @@ node apps/cli/dist/index.js samples \
   --mode standard --format json --out online.json --fail-on never
 ```
 
+![CI のジョブ offline-parity：unshare でネットワークを遮断し、example.com への fetch が失敗することを確かめてから、同じ CLI をオンラインとオフラインで実行し、終了コード 0 と検出結果の一致を両方とも要求する](/images/vibeguard-offline-parity-ci/fig1-workflow.png)
+
 ## 比較の中身
 
 比べているのは、出力ファイルのバイト列そのものではありません。検出結果の ID（`findingId`）は時刻から作っているので、実行するたびに変わります。そこで、各検出から `findingId` を取り除き、検出の並びを並べ替えたうえで、集計（`summary`）と検出の一覧を JSON の文字列にして比べています。
@@ -44,6 +46,8 @@ return JSON.stringify({ summary: doc.summary, findings }, null, 2);
 ```
 
 このジョブは、2026 年 11 月 11 日の main への push でも成功しています。
+
+![比べるのは findingId を除いて並べ替えた集計と検出の一覧で、対象は CLI だけ。VS Code 拡張と Chrome 拡張は別のジョブ、GitHub Actions の Action は主張の外](/images/vibeguard-offline-parity-ci/fig2-compare-scope.png)
 
 ## この検査で言えないこと
 
