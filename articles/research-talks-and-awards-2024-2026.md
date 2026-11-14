@@ -11,6 +11,8 @@ published_at: 2026-11-20 08:00
 
 この記事は、2024 年から 2026 年までの学会発表と受賞の記録です。発表のプログラムや受賞者の一覧は主催者ごとに別々のページに載るので、自分でも探しにくくなっていました。ここに一覧にして、主催者のページと、内容を詳しく書いた記事へリンクします。
 
+![2024 年から 2026 年までの学会発表と受賞の年表](/images/research-talks-and-awards-2024-2026/fig1-timeline.png)
+
 ## 学会発表
 
 ### SES2026 一般論文（情報処理学会 ソフトウェアエンジニアリングシンポジウム 2026）
@@ -98,6 +100,8 @@ LoRa 通信と AI を組み合わせて、設備の振動を遠隔から監視�
 - ネットワークを遮断した CLI と結果を比べる CI：https://zenn.dev/kd_yuta/articles/vibeguard-offline-parity-ci
 - ファイルを書く前に診断する MCP サーバの試作：https://zenn.dev/kd_yuta/articles/vibeguard-mcp-guard-poc
 - 自動修正の safe / needs-review のラベル：https://zenn.dev/kd_yuta/articles/vibeguard-autofix-safety-labels
+
+![VibeGuard・自己対戦型の自律実験・点検ドローン・振動と音響のエッジ AI・CO2 のマッピングの 5 つのテーマに分けた 15 本の記事](/images/research-talks-and-awards-2024-2026/fig2-article-map.png)
 
 ## おわりに
 

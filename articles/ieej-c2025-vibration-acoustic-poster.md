@@ -17,6 +17,8 @@ SPRESENSE に、3 軸の加速度センサ（MPU6050）と音響センサ（MAX4
 
 処理は、取得した信号を CSV にし、FFT で特徴量を抽出して正規化し、PC で学習したモデルを C++ に変換して SPRESENSE に実装する、という流れです。ポスターでは、Isolation Forest で外れ値のスコアを出して異常の候補を絞り、その候補だけを Random Forest で正常と異常に分類する構成を示しました。
 
+![ポスターで示した構成：MPU6050 と MAX4466 の信号を SPRESENSE で取得し、FFT の特徴量を Z スコアで正規化して、Isolation Forest で候補を絞り Random Forest で分類する](/images/ieej-c2025-vibration-acoustic-poster/fig1-pipeline.png)
+
 SPRESENSE 側のプログラムは、次のファイルに分けています。
 
 - `rf_model.h`：決定木の構造（学習したモデルを C++ に変換したもの）
@@ -40,6 +42,8 @@ SPRESENSE 側のプログラムは、次のファイルに分けています。
 | 正常を正常と判定 | 300 件中 252 件（84%） |
 | 異常を異常と判定 | 300 件中 300 件（100%） |
 | 全体の正解率 | 92% |
+
+![ポスターの結果の欄：実際は正常の 300 件のうち 252 件を正常、48 件を異常と判定し、実際は異常の 300 件はすべて異常と判定した。全体の正解率は 92%](/images/ieej-c2025-vibration-acoustic-poster/fig2-results.png)
 
 ## 見直して分かった限定
 

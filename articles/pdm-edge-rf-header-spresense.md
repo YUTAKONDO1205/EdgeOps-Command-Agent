@@ -23,6 +23,8 @@ https://zenn.dev/kd_yuta/articles/ieej-c2025-vibration-acoustic-poster
 4. 学習したモデルを `micromlgen` で C++ のヘッダ（`rf_model.h`）に変換し、正規化の平均と標準偏差を `norm.h` に書き出す
 5. SPRESENSE 側で、同じ特徴量を作り、正規化して、モデルの `predict` を呼び出す
 
+![PC で CSV から 32 次元の特徴量を作って Random Forest を学習し、micromlgen で rf_model.h と norm.h に書き出す。SPRESENSE 側は同じ特徴量を作って正規化し、predict を呼ぶ](/images/pdm-edge-rf-header-spresense/fig1-pipeline.png)
+
 ## 特徴量
 
 1 チャンネル 64 サンプルに Hann 窓をかけて片側 FFT をとり、先頭の 32 ビンを 4 ビンずつ平均して 8 つの帯域の値にします。
@@ -36,6 +38,8 @@ features = [spectrum[i : i + config.band_width].mean()
 ```
 
 2025 年のポスターの時点では、100 サンプルの窓に 1,024 点の FFT をかけ、先頭の 50 ビンを 4 チャンネル分つないだ 200 次元の特徴量を使っていました。作り直した版では、SPRESENSE 側で同じ計算をそのまま書けるように、点数と次元を小さくしています。
+
+![64 サンプルに対称な Hann 窓をかけ、片側 FFT の先頭 32 ビンを 4 ビンずつ平均して 8 帯域、4 チャンネルで 32 次元。2025 年のポスターの時点は 200 次元](/images/pdm-edge-rf-header-spresense/fig2-features.png)
 
 ## SPRESENSE 側で同じ特徴量を作る
 
@@ -67,6 +71,8 @@ inline void ExtractBandFeatures(const float* signal, float* output) {
 ## 結果
 
 学習用とテスト用に 3 対 1 で分けたテスト 256 件（正常 128・異常 128）では、すべて正しく判定しました。ただし、書き出したモデルを見ると、100 本の木はどれも 1 回の分岐だけで正常と異常を分けていました。今のデータは単純に分かれすぎていて、この結果は実際の設備での性能を示すものではありません。
+
+![テスト 256 件は正常 128・異常 128 をすべて正しく判定したが、100 本の木はどれも 1 回の分岐だけで分けていた](/images/pdm-edge-rf-header-spresense/fig3-result.png)
 
 ## 限定
 

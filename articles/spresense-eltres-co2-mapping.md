@@ -17,6 +17,8 @@ https://elchika.com/article/504f286c-413b-47d3-89f9-38920ca5e5c7/
 
 SPRESENSE に、ELTRES のアドオンボードと CO2 センサ（MH-Z19B）を載せています。ELTRES はソニーの LPWA で、GNSS で取った位置もこのボードから得ます。送ったデータは CLIP Viewer Lite のサーバに届き、MATLAB から API で取得して地図に描きます。
 
+![MH-Z19B を PWM で読み、SPRESENSE と ELTRES のアドオンボードから送り、CLIP Viewer Lite を経て MATLAB で受信時刻の差が 180 秒以内の位置と濃度を組にする](/images/spresense-eltres-co2-mapping/fig1-system.png)
+
 ## CO2 センサを PWM で読む理由
 
 ELTRES のアドオンボードは UART 系の資源を使います。CO2 センサも UART で接続すると、資源が競合して設計が複雑になります。そこで、MH-Z19B は PWM の出力を読む構成にしました。
@@ -55,6 +57,8 @@ if (preferGpsPayload) {
 ```
 
 1 回のペイロードに両方を詰めず、交互に送る形にしたので、受信側では位置と濃度を組にし直す必要があります。
+
+![16 バイトのペイロード：位置情報は 0x81・緯度と経度の BCD・測位の状態、CO2 は 0x82 と 9〜12 バイト目の float32。1 分ごとに位置と CO2 を入れ替えて送る](/images/spresense-eltres-co2-mapping/fig2-payload.png)
 
 ## MATLAB 側で組にし直す
 
