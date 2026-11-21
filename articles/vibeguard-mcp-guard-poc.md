@@ -3,8 +3,7 @@ title: "AI エージェントがファイルを書く前に診断する MCP サ�
 emoji: "🚦"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["mcp", "security", "ai", "typescript", "claude"]
-published: true
-published_at: 2026-11-19 08:00
+published: false
 ---
 
 近藤悠太です。AI 生成コードの診断ツール VibeGuard の解析エンジンを、AI のコーディングエージェントがファイルを書き込む前に呼び出せるように、MCP（Model Context Protocol）のサーバとして試作しました。この記事では、その仕組みと、試作の段階で分かっている限界を書きます。

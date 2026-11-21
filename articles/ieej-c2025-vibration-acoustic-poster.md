@@ -3,8 +3,7 @@ title: "電気学会 C部門大会 2025 で、振動と音響による異常兆�
 emoji: "📳"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "edgeai", "機械学習", "iot", "research"]
-published: true
-published_at: 2026-11-17 12:00
+published: false
 ---
 
 近藤悠太です。2025 年 8 月に金沢工業大学で開かれた電気学会 電子・情報・システム部門大会（C部門大会）の学生ポスターセッションで、「振動・音響センサを用いた異常兆候検知システムの開発と AI 識別モデル構築」を発表しました（PS8-8）。

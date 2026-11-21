@@ -3,8 +3,7 @@ title: "SPRESENSE と ELTRES で、CO2 濃度と位置を 1 台から交互に�
 emoji: "🌫"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "iot", "arduino", "matlab", "lpwa"]
-published: true
-published_at: 2026-11-18 08:00
+published: false
 ---
 
 近藤悠太です。2024 年の SPRESENSE 活用コンテストに出した作品「SPRESENSEとELTRES通信でCO2濃度をマッピング」で、クレスコ ELTRESアドオンボード優秀賞をいただきました。作品の解説は Elchika に書いています。

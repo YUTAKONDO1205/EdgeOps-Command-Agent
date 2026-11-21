@@ -4,7 +4,6 @@ emoji: "📡"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "lora", "iot", "arduino", "電子工作"]
 published: true
-published_at: 2026-11-16 12:00
 ---
 
 近藤悠太です。2024 年の SPRESENSE 活用コンテストに出した作品「SPRESENSEと振動解析による設備保全の最前線」が、LoRa活用アイデア賞と JBAT Qanat Universe賞をいただきました。翌 2025 年には、同じテーマで電気学会 U-21 学生研究発表会に「LoRa通信とAIを活用した振動検知による異常予知システムの構築」を出し、奨励賞をいただいています（2D-2）。

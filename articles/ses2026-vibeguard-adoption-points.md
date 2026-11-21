@@ -4,7 +4,6 @@ emoji: "🧭"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["security", "vscode", "githubactions", "chromeextension", "typescript"]
 published: true
-published_at: 2026-11-14 18:00
 ---
 
 近藤悠太です。2026 年 9 月 11 日に、情報処理学会のソフトウェアエンジニアリングシンポジウム 2026（SES2026、慶應義塾大学 日吉キャンパス）で、一般論文「AI生成コードの採用判断点に基づくマルチコンテキストセキュリティ診断配置方式の提案とVibeGuardによる検証」を発表しました。セッションはコード解析・セキュリティ・テスト支援で、単著の論文です。

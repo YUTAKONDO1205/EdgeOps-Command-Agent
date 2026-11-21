@@ -3,8 +3,7 @@ title: "学習した Random Forest を C ヘッダにして SPRESENSE から呼�
 emoji: "🧮"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "machinelearning", "python", "arduino", "edgeai"]
-published: true
-published_at: 2026-11-18 12:00
+published: false
 ---
 
 近藤悠太です。加速度と音響の信号から設備の異常を判定する研究（pdm_edge）で、PC で学習した Random Forest を C のヘッダファイルに変換し、SPRESENSE から呼び出す部分を、2026 年にリポジトリとして作り直しました。この記事では、その構成と、学習側と SPRESENSE 側で特徴量を一致させるために気をつけた点を書きます。

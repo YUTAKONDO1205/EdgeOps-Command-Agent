@@ -3,8 +3,7 @@ title: "「コードを外部へ送らない」を CI で確かめる仕組み�
 emoji: "📴"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["githubactions", "security", "linux", "nodejs", "vscode"]
-published: true
-published_at: 2026-11-18 18:00
+published: false
 ---
 
 近藤悠太です。AI 生成コードの診断ツール VibeGuard は、解析を手元の端末で完結させ、コードを外部へ送らないことを方針にしています。この記事では、その方針を説明文で約束するだけでなく、CI で確かめるために作ったワークフローを紹介します。

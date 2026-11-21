@@ -3,8 +3,7 @@ title: "VibeGuard の自動修正を 7 件に絞った理由と、safe / needs-r
 emoji: "🩹"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["security", "typescript", "cli", "githubactions", "staticanalysis"]
-published: true
-published_at: 2026-11-19 18:00
+published: false
 ---
 
 近藤悠太です。AI 生成コードの診断ツール VibeGuard には、検出した問題をファイルに書き戻す自動修正（`--fix`）があります。85 件ある検出ルールのうち、自動修正を持つのは 7 件だけです（公開版 0.3.6 の時点）。この記事では、なぜ 7 件に絞ったのかと、修正に付けている 2 種類のラベルを説明します。

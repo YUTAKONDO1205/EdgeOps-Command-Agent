@@ -3,8 +3,7 @@ title: "SPRESENSE 活用コンテスト 2025 の特別賞をいただいた点�
 emoji: "🛸"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "drone", "edgeai", "ble", "組み込み"]
-published: true
-published_at: 2026-11-17 18:00
+published: false
 ---
 
 近藤悠太です。2025 年の SPRESENSE 活用コンテストに出した作品「SPRESENSEでインフラ点検向けのエッジAIドローン」が、クレイン電子 BLEアドオンボード特別賞をいただきました。作品の解説は Elchika に書いています。

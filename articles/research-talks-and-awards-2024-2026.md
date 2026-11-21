@@ -3,8 +3,7 @@ title: "2024〜2026 年の学会発表と受賞の記録（エッジ AI と AI �
 emoji: "📝"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["spresense", "edgeai", "iot", "security", "research"]
-published: true
-published_at: 2026-11-20 08:00
+published: false
 ---
 
 近藤悠太（Yuta Kondo）です。SPRESENSE 上で動作するエッジ AI の研究と、AI 生成コードの診断ツール VibeGuard の開発をしています。
